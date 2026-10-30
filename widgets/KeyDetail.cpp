@@ -116,6 +116,9 @@ void KeyDetail::setKey(pki_key *key, bool import)
 			keyModulus->setText(key->pubkey());
 			break;
 #ifndef OPENSSL_NO_EC
+#ifndef OPENSSL_NO_SM2
+		case EVP_PKEY_SM2:
+#endif
 		case EVP_PKEY_EC:
 			int nid;
 			nid = key->ecParamNid();

@@ -12,11 +12,12 @@
 #include <QDebug>
 
 const QList<int> digest::all_digests(
-	{ NID_md5, NID_ripemd160, NID_sha1,
+	{ NID_md5, NID_sha1,
 	  NID_sha224, NID_sha256, NID_sha384, NID_sha512,
 #ifndef LIBRESSL_VERSION_NUMBER
 	  NID_sha3_224, NID_sha3_256, NID_sha3_384, NID_sha3_512,
 #endif
+	  NID_sm3,
 });
 
 int digest::default_md(NID_sha256);
@@ -55,7 +56,6 @@ bool digest::isInsecure() const
 {
 	switch (md_nid) {
 	case NID_md5:
-	case NID_ripemd160:
 	case NID_sha1:
 		return true;
 	}

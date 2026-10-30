@@ -20,6 +20,15 @@ string(REGEX MATCH  "([0-9]+\.[0-9]+\.[0-9]+)" OSX_SDK_MINIMUM
 
 include(GNUInstallDirs)
 include(CTest)
+include(cmake/CPM.cmake)
+
+CPMAddPackage(
+        NAME openssl-cmake
+        URL https://github.com/jimmy-park/openssl-cmake/archive/main.tar.gz
+        OPTIONS
+        "OPENSSL_CONFIGURE_OPTIONS enable-ntls\\\\;-legacy"
+        "OPENSSL_SOURCE https://github.com/Tongsuo-Project/Tongsuo/archive/refs/tags/8.5.0.tar.gz"
+)
 
 ##### Git command to tweak the version and commit hash
 include(cmake/git_version.cmake)
@@ -129,9 +138,16 @@ get_target_property(qmake_executable ${QT}::qmake IMPORTED_LOCATION)
 get_filename_component(_qt_bin_dir "${qmake_executable}" DIRECTORY)
 
 if (NOT OPENSSL_ROOT_DIR)
-  get_filename_component(OPENSSL_ROOT_DIR ${OPENSSL_INCLUDE_DIR} DIRECTORY)
+  # OPENSSL_INCLUDE_DIR may be a ;-separated list (e.g. a separate source and
+  # build include dir when OpenSSL is built via CPM). Take the last entry whose
+  # parent is the OpenSSL root; this also avoids a hard-coded index that would
+  # break for a single-path OPENSSL_INCLUDE_DIR.
+  if (OPENSSL_INCLUDE_DIR)
+    list(GET OPENSSL_INCLUDE_DIR -1 _openssl_inc)
+    get_filename_component(OPENSSL_ROOT_DIR "${_openssl_inc}" DIRECTORY)
+  endif()
 endif()
-file(TO_CMAKE_PATH ${OPENSSL_ROOT_DIR}  OPENSSL_ROOT_DIR)
+file(TO_CMAKE_PATH "${OPENSSL_ROOT_DIR}" OPENSSL_ROOT_DIR)
 
 target_link_libraries(xcalib
     OpenSSL::Crypto

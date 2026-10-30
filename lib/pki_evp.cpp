@@ -119,6 +119,9 @@ void pki_evp::generate(const keyjob &task)
 		break;
 	}
 #ifndef OPENSSL_NO_EC
+#ifndef OPENSSL_NO_SM2
+	case EVP_PKEY_SM2:
+#endif
 	case EVP_PKEY_EC: {
 		EC_KEY *eckey;
 		EC_GROUP *group = EC_GROUP_new_by_curve_name(task.ec_nid);
@@ -137,6 +140,11 @@ void pki_evp::generate(const keyjob &task)
 				break;
 			}
 		}
+#ifndef OPENSSL_NO_SM2
+		if (task.ec_nid == NID_sm2) {
+			EVP_PKEY_set_alias_type(key, EVP_PKEY_SM2);
+		}
+#endif
 		EC_KEY_free(eckey);
 		EC_GROUP_free(group);
 		break;

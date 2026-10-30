@@ -43,6 +43,9 @@ class keytype
 #ifdef EVP_PKEY_ED25519
 			keytype(EVP_PKEY_ED25519, "ED25519", CKM_VENDOR_DEFINED, false, false),
 #endif
+#ifndef OPENSSL_NO_SM2
+			keytype(EVP_PKEY_SM2, "SM2", CKM_VENDOR_DEFINED, false, false),
+#endif
 #endif
 		};
 	}
@@ -93,6 +96,11 @@ class keytype
 	}
 	static const keytype byPKEY(EVP_PKEY *pkey)
 	{
+#ifndef OPENSSL_NO_SM2
+		if (EVP_PKEY_id(pkey) == NID_sm2) {
+			return byType(EVP_PKEY_SM2);
+		}
+#endif
 		return byType(EVP_PKEY_type(EVP_PKEY_id(pkey)));
 	}
 };
@@ -123,6 +131,10 @@ class keyjob
 		ec_nid = NID_undef;
 		if (isEC())
 			ec_nid = OBJ_txt2nid(sl[1].toLatin1());
+#ifndef OPENSSL_NO_SM2
+		else if (isSM2())
+			ec_nid = NID_sm2;
+#endif
 		else if (!isED25519())
 			size = sl[1].toInt();
 		slot = slotid();
@@ -152,11 +164,21 @@ class keyjob
 		return false;
 #endif
 	}
+	bool isSM2() const
+	{
+#ifdef EVP_PKEY_SM2
+		return ktype.type == EVP_PKEY_SM2;
+#else
+		return false;
+#endif
+	}
 	bool isValid()
 	{
 		if (!ktype.isValid())
 			return false;
 		if (isED25519())
+			return true;
+		if (isSM2())
 			return true;
 		if (isEC() && builtinCurves.containNid(ec_nid))
 			return true;

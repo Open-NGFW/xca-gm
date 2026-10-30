@@ -319,7 +319,11 @@ QString pki_key::pubkey() const
 int pki_key::ecParamNid() const
 {
 	const EC_KEY *ec;
-
+#ifndef OPENSSL_NO_SM2
+	if (getKeyType() == EVP_PKEY_SM2) {
+		return NID_sm2;
+	}
+#endif
 	if (getKeyType() != EVP_PKEY_EC)
 		return NID_undef;
 	ec = EVP_PKEY_get0_EC_KEY(key);
@@ -328,7 +332,11 @@ int pki_key::ecParamNid() const
 
 BIGNUM *pki_key::ecPubKeyBN() const
 {
-	if (getKeyType() != EVP_PKEY_EC)
+	if (getKeyType() != EVP_PKEY_EC
+#ifndef OPENSSL_NO_SM2
+		&& getKeyType() != EVP_PKEY_SM2
+#endif
+	)
 		return NULL;
 
 	const EC_KEY *ec = EVP_PKEY_get0_EC_KEY(key);
@@ -398,7 +406,7 @@ QList<int> pki_key::possibleHashNids()
 
 	switch (EVP_PKEY_type(getKeyType())) {
 		case EVP_PKEY_RSA:
-			nids << NID_md5 << NID_ripemd160 << NID_sha1;
+			nids << NID_md5 << NID_sha1;
 			nids += allSha2 + allSha3;
 			break;
 		case EVP_PKEY_DSA:
@@ -406,6 +414,12 @@ QList<int> pki_key::possibleHashNids()
 			break;
 #ifndef OPENSSL_NO_EC
 		case EVP_PKEY_EC:
+#ifndef OPENSSL_NO_SM2
+			if (getKeyType() == NID_sm2) {
+				nids << NID_sm3;
+				break;
+			}
+#endif
 			nids << NID_sha1;
 			nids += allSha2 + allSha3;
 			break;
@@ -474,7 +488,11 @@ QVariant pki_key::column_data(const dbheader *hd) const
 		case HD_key_curve:
 			QString r;
 #ifndef OPENSSL_NO_EC
-			if (getKeyType() == EVP_PKEY_EC)
+			if (getKeyType() == EVP_PKEY_EC
+#ifndef OPENSSL_NO_SM2
+				|| getKeyType() == EVP_PKEY_SM2
+#endif
+				)
 				r = OBJ_nid2sn(ecParamNid());
 #endif
 			return QVariant(r);

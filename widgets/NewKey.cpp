@@ -205,6 +205,8 @@ keyjob NewKey::getKeyJob() const
 	if (job.isEC()) {
 		int idx = curveBox->currentIndex();
 		job.ec_nid = curveBox->itemData(idx).toInt();
+	} else if (job.isSM2()) {
+		job.ec_nid = EVP_PKEY_SM2;
 	} else {
 		QString size = keyLength->currentText();
 		size.replace(QRegularExpression("[^0-9]"), "");
