@@ -14,7 +14,7 @@ set_property(TARGET ${PROJECT_NAME}
              PROPERTY MACOSX_BUNDLE_INFO_PLIST ${D}/Info.plist)
 
 ##### XCA Templates
-list(APPEND XCA_TEMPLATES CA.xca TLS_server.xca TLS_client.xca)
+list(APPEND XCA_TEMPLATES CA.xca TLS_server.xca TLS_client.xca GM_enc.xca GM_sign.xca)
 list(TRANSFORM XCA_TEMPLATES PREPEND ${S}/)
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${XCA_TEMPLATES})
 list(APPEND APP_RESOURCES "${XCA_TEMPLATES}")

@@ -21,3 +21,10 @@ businessCategory
 streetAddress
 localityName
 postalCode
+residenterCardNumber
+passportNumber
+insuranceNumber
+iCRegistrationNumber
+organizationCode
+taxationNumber
+uniformSocialCreditIdentifier
