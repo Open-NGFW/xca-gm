@@ -32,6 +32,7 @@ jobs:
         - os: windows
           generator: MinGW Makefiles
           openssl_root: D:\msys2\msys64\mingw64
+          openssl_perl: D:/msys2/msys64/usr/bin/perl.exe
           artifact: |
              build/xca-*.msi
              build/xca-portable-*.zip
@@ -40,6 +41,7 @@ jobs:
         - os: windows
           qt: "5.15.2"
           winarch: win64_mingw81
+          openssl_perl: D:/msys2/msys64/usr/bin/perl.exe
           runs: windows-latest
 
         exclude:
@@ -74,7 +76,7 @@ jobs:
       with:
         location: ${{env.MSYS}}
         msystem: mingw64
-        install: mingw-w64-x86_64-openssl openssl-devel base-devel mingw-w64-x86_64-gcc
+        install: mingw-w64-x86_64-openssl openssl-devel base-devel mingw-w64-x86_64-gcc perl
 
     - name: Brew install OpenSSL
       if: matrix.os == 'macos'
@@ -88,7 +90,9 @@ jobs:
     - name: Configure
       # No YAML Multiline mechanism (>, |, \, >-, >+2 whatever) works as expected
       # Give up. Live with the long line
-      run: cmake -B ${{github.workspace}}/build -G "${{matrix.generator}}" -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DOPENSSL_ROOT_DIR=${{matrix.openssl_root}} --warn-uninitialized -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET="10.15"
+      # On Windows the MSYS2 (msys/Unix-path) perl is required for the bundled
+      # OpenSSL/Tongsuo "Configure" script; the native MSWin32 perl is rejected.
+      run: cmake -B ${{github.workspace}}/build -G "${{matrix.generator}}" -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DOPENSSL_ROOT_DIR=${{matrix.openssl_root}}${{ matrix.openssl_perl && format(' -DOPENSSL_CONFIGURE_TOOL={0}', matrix.openssl_perl) || '' }} --warn-uninitialized -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET="10.15"
 
     - name: Build
       run: cmake --build ${{github.workspace}}/build -j 5 -v
