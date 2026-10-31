@@ -44,7 +44,7 @@ jobs:
 
         exclude:
         - os: windows
-          qt: "6.6.2"
+          qt: "6.8.4"
 
         - os: macos
           qt: "5.15.2"
