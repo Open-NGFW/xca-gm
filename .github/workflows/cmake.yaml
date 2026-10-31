@@ -87,12 +87,44 @@ jobs:
       with:
         fetch-depth: 0
 
+    - name: Use the MSYS2 Perl for the bundled OpenSSL/Tongsuo (Windows)
+      # OpenSSL/Tongsuo bakes the perl it was configured with into the generated
+      # Makefile (`PERL = env('PERL') || $^X`). Header / err-string generation
+      # then re-runs that perl on configdata.pm, which does `use Pod::Usage` and
+      # friends at compile time, so the recorded interpreter must be a complete
+      # perl. The `perl` on this runner's PATH is Git for Windows' minimal
+      # msys-layout build, which lacks those core modules, and the build dies
+      # with "Can't locate Pod/Usage.pm ... at configdata.pm". Switch to MSYS2's
+      # own perl -- OpenSSL's NOTES-WINDOWS recommends exactly that for MinGW
+      # builds -- and export PERL so Configure records it.
+      if: matrix.os == 'windows'
+      shell: pwsh
+      run: |
+        $perl = "${{ matrix.openssl_perl }}"
+        "PERL=$perl" >> $env:GITHUB_ENV
+        try { & $perl -MPod::Usage -e 'print qq{OpenSSL/Tongsuo will use perl: $^X\n}' }
+        catch { Write-Warning $_ }
+
     - name: Configure
       # No YAML Multiline mechanism (>, |, \, >-, >+2 whatever) works as expected
       # Give up. Live with the long line
-      # On Windows the MSYS2 (msys/Unix-path) perl is required for the bundled
-      # OpenSSL/Tongsuo "Configure" script; the native MSWin32 perl is rejected.
+      # On Windows, run the bundled OpenSSL/Tongsuo "Configure" under MSYS2's
+      # perl: OpenSSL records that interpreter into the Makefile as its PERL.
       run: cmake -B ${{github.workspace}}/build -G "${{matrix.generator}}" -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DOPENSSL_ROOT_DIR=${{matrix.openssl_root}}${{ matrix.openssl_perl && format(' -DOPENSSL_CONFIGURE_TOOL={0}', matrix.openssl_perl) || '' }} --warn-uninitialized -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET="10.15"
+
+    - name: Pin the OpenSSL/Tongsuo Makefile to the MSYS2 Perl (Windows)
+      # Belt and braces: OpenSSL bakes `PERL = env('PERL') || $^X` into the
+      # generated Makefile. Force the complete MSYS2 perl there so the header
+      # generation rules (which `use Pod::Usage` etc. at compile time) work
+      # whatever the runner resolved the interpreter to during Configure.
+      if: matrix.os == 'windows'
+      shell: pwsh
+      run: |
+        $mf = "${{ github.workspace }}/build/_deps/openssl-source-build/Makefile"
+        $txt = [IO.File]::ReadAllText($mf)
+        $txt = $txt -replace '(?m)^PERL=.*$', "PERL=${{ matrix.openssl_perl }}"
+        [IO.File]::WriteAllText($mf, $txt)
+        Select-String -Path $mf -Pattern '^PERL=' | ForEach-Object { $_.Line }
 
     - name: Build
       run: cmake --build ${{github.workspace}}/build -j 5 -v
