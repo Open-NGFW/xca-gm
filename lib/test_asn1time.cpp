@@ -8,6 +8,7 @@
 #include <QTest>
 #include <QLocale>
 #include <QTimeZone>
+#include <QRegularExpression>
 
 #include "asn1time.h"
 
@@ -36,6 +37,15 @@ void test_asn1time::construct_op()
 	QCOMPARE(d , a.toUTC());
 }
 
+// The timezone abbreviation Qt prints for UTC ("GMT" vs "UTC") differs
+// between Qt versions, system tzdata and platforms (macOS prints "GMT",
+// Linux "UTC"). Normalise it so the test doesn't depend on the environment.
+static QString prettyNormalizedZone(const QString &s)
+{
+	QString r = s;
+	return r.replace(QRegularExpression(" (GMT|UTC)$"), " UTC");
+}
+
 void test_asn1time::output()
 {
 	QLocale::setDefault(QLocale::C);
@@ -54,18 +64,16 @@ void test_asn1time::output()
 
 #if !defined(Q_OS_WIN32)
 	a.setTimeZone(QTimeZone("UTC"));
-	#if (QT_VERSION >= QT_VERSION_CHECK(6, 7, 0))
-		#define UTC "GMT"
-	#else
-		#define UTC "UTC"
-	#endif
-	QCOMPARE(a.toPretty(), "Monday, 25 November 2019 15:30:15 " UTC);
+	QCOMPARE(prettyNormalizedZone(a.toPretty()),
+		 QString("Monday, 25 November 2019 15:30:15 UTC"));
 
 	a.setTimeZone(QTimeZone("Europe/Berlin"));
-	QCOMPARE(a.toPretty(), "Monday, 25 November 2019 14:30:15 " UTC);
+	QCOMPARE(prettyNormalizedZone(a.toPretty()),
+		 QString("Monday, 25 November 2019 14:30:15 UTC"));
 
 	a.setTimeZone(QTimeZone("UTC+07:00"));
-	QCOMPARE(a.toPretty(), "Monday, 25 November 2019 08:30:15 " UTC);
+	QCOMPARE(prettyNormalizedZone(a.toPretty()),
+		 QString("Monday, 25 November 2019 08:30:15 UTC"));
 #endif
 }
 
