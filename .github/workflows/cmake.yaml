@@ -12,7 +12,7 @@ jobs:
       matrix:
 
         os: [ ubuntu, macos, windows ]
-        qt: [ "5.15.2", "6.6.2" ]
+        qt: [ "5.15.2", "6.8.4" ]
 
         include:
         - os: ubuntu
