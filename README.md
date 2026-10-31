@@ -1,6 +1,8 @@
 # XCA - X Certificate and Key Management
 
-[![CMake](https://github.com/chris2511/xca/actions/workflows/cmake.yaml/badge.svg)](https://github.com/chris2511/xca/actions/workflows/cmake.yaml)
+[![CMake](https://github.com/Open-NGFW/xca-gm/actions/workflows/cmake.yaml/badge.svg)](https://github.com/Open-NGFW/xca-gm/actions/workflows/cmake.yaml)
+
+> This is a modified version for adding Chinese GM support.
 
 ## __Release Notes__
 
