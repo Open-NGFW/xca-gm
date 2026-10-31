@@ -40,7 +40,7 @@ jobs:
         - os: windows
           qt: "5.15.2"
           winarch: win64_mingw81
-          runs: windows-2019
+          runs: windows-latest
 
         exclude:
         - os: windows
